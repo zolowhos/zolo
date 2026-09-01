@@ -727,6 +727,4 @@ alwaysApply: true
 
 ## Closing note
 
-Vibe coding is not "turn off your brain." It is shipping with an agent that forgets everything between chats, bills you for every token, and will invent APIs if you let it.
-
-Give it a goal, a fence, current docs, and a verify step. Everything else is flavor.
+Ai is an amazing tool but a tool is useless with a person that dosnt have a brain.
