@@ -21,7 +21,7 @@
   <link rel="stylesheet" href="css/components.css">
   <link rel="stylesheet" href="css/pages/home.css">
   <link rel="stylesheet" href="css/fx.css">
-  <link rel="stylesheet" href="css/pages/guide.css?v=4">
+  <link rel="stylesheet" href="css/pages/guide.css?v=5">
 </head>
 <body>
   <div class="fx-layer" aria-hidden="true" data-home-chrome>
@@ -186,12 +186,13 @@
 
     <main class="guide-layout">
       <aside class="guide-aside" aria-label="Contents">
-        <nav>
+        <details class="guide-toc-panel" data-guide-toc-panel>
+          <summary class="guide-toc-summary">Contents</summary>
           <ul class="guide-toc" data-guide-toc></ul>
-        </nav>
+        </details>
       </aside>
 
-      <article>
+      <article class="guide-article">
         <header class="guide-hero">
           <h1>Vibe Coding Bible</h1>
           <p>
@@ -233,6 +234,6 @@
   </div>
 
   <script src="js/main.js" defer></script>
-  <script src="js/guide.js?v=4" defer></script>
+  <script src="js/guide.js?v=5" defer></script>
 </body>
 </html>

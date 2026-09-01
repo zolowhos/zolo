@@ -169,12 +169,25 @@
   const statusEl = document.querySelector("[data-guide-status]");
   const bodyEl = document.querySelector("[data-guide-body]");
   const tocEl = document.querySelector("[data-guide-toc]");
+  const tocPanel = document.querySelector("[data-guide-toc-panel]");
   const bibleView = document.querySelector("[data-bible-view]");
 
   let guideLoaded = false;
   let tocWired = false;
+  const desktopTocMq = window.matchMedia("(min-width: 960px)");
 
   const bibleHashes = new Set(["1", "bible"]);
+
+  const syncTocPanelMode = () => {
+    if (!tocPanel) return;
+    if (desktopTocMq.matches) tocPanel.open = true;
+  };
+
+  if (tocPanel) {
+    tocPanel.addEventListener("toggle", () => {
+      if (desktopTocMq.matches) tocPanel.open = true;
+    });
+  }
 
   const isBibleRoute = () => {
     const h = (location.hash || "").slice(1);
@@ -239,6 +252,12 @@
     if (!heads.length) return;
     tocWired = true;
 
+    links.forEach((a) => {
+      a.addEventListener("click", () => {
+        if (!desktopTocMq.matches && tocPanel) tocPanel.open = false;
+      });
+    });
+
     const onScroll = () => {
       if (!document.body.classList.contains("is-bible-open")) return;
       let current = heads[0];
@@ -288,9 +307,19 @@
   const syncRoute = () => {
     const open = isBibleRoute();
     setBibleOpen(open);
-    if (open) loadGuide();
+    if (open) {
+      loadGuide();
+      syncTocPanelMode();
+    }
   };
 
+  if (typeof desktopTocMq.addEventListener === "function") {
+    desktopTocMq.addEventListener("change", syncTocPanelMode);
+  } else if (typeof desktopTocMq.addListener === "function") {
+    desktopTocMq.addListener(syncTocPanelMode);
+  }
+
   window.addEventListener("hashchange", syncRoute);
+  syncTocPanelMode();
   syncRoute();
 })();
