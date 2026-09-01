@@ -27,6 +27,7 @@ You do not need every tool right now, eventually you will start to use these.
 - A decent machine 
 - A brain
 - [Git](https://git-scm.com/install/windows) / [GitHub](https://github.com/)
+- [GitHub CLI (`gh`)](https://cli.github.com/) if you ship to GitHub (repos, PRs, Pages)
 - A AI-IDE [Cursor](https://cursor.com) is the default for this guide
 
 ### Accounts worth having
@@ -38,6 +39,7 @@ You do not need every tool right now, eventually you will start to use these.
 | [Codex](https://github.com/openai/codex) | AI-IDE similar to cursor |
 | [Claude Code](https://code.claude.com/docs/en) | AI-IDE similar to cursor not recommended |
 | [OpenCode](https://opencode.ai/) or [Ollama](https://ollama.com/) | Free / local path when you do not want paid API bills |
+| [GitHub CLI](https://cli.github.com/) | Create repos, PRs, issues, Pages from the terminal |
 
 If your broke but still want to vibe code, I recommend just using open code and if thats not enough get cursor for 10$.
 
@@ -322,6 +324,99 @@ Honest limits: local / free models are weaker at hard multi-file refactors than 
 
 Same bible rules still win: plan first, one job per chat, Git commits, scope lock, mistakes file.
 
+### GitHub CLI (`gh`)
+
+Docs: [cli.github.com](https://cli.github.com/) · manual: [cli.github.com/manual](https://cli.github.com/manual/)
+
+`git` tracks files. `gh` talks to GitHub itself: create repos, open PRs, check CI, flip Pages on. Pair it with Cursor so the agent can ship without you clicking around github.com.
+
+Install (pick one):
+
+```bash
+# Windows (winget)
+winget install --id GitHub.cli -e
+
+# macOS
+brew install gh
+
+# or grab an installer from https://cli.github.com/
+```
+
+Sign in once:
+
+```bash
+gh auth login
+gh auth status
+```
+
+Use HTTPS + login in browser if you are new. After that, `git push` and `gh` both use the same account.
+
+**Create a repo and push what you already built**
+
+```bash
+cd your-project
+git init -b main
+git add -A
+git commit -m "Initial commit"
+gh repo create my-cool-thing --public --source=. --remote=origin --push
+```
+
+Flags you will actually use:
+
+- `--public` / `--private`
+- `--source=.` (this folder is the repo)
+- `--remote=origin`
+- `--push` (upload `main` immediately)
+- `--description "one line about the project"`
+
+**Day-to-day commands**
+
+```bash
+gh repo view                          # open repo metadata
+gh repo view --web                    # open in browser
+gh status                             # PRs + issues that need you
+gh pr create --fill                   # PR from current branch
+gh pr create --title "..." --body "..."
+gh pr list
+gh pr checks                          # CI status for this PR
+gh pr merge
+gh issue create --title "..." --body "..."
+gh issue list
+gh run list                           # Actions runs
+gh run view <id> --log                # failed job logs
+```
+
+**Static sites / GitHub Pages**
+
+After the site is on `main`:
+
+```bash
+# turn on Pages from main branch, site root
+gh api -X POST "repos/OWNER/REPO/pages" \
+  -f build_type=legacy \
+  -f "source[branch]=main" \
+  -f "source[path]=/"
+```
+
+Put a `CNAME` file in the repo root with your domain (example: `zolo.mov`). DNS still happens at your registrar (A records to GitHub IPs, `www` CNAME to `OWNER.github.io`).
+
+**Vibe coding rules for `gh`**
+
+1. Commit with `git` first. `gh` does not replace commits.
+2. Never paste tokens into chat. `gh auth login` stores them locally.
+3. Tell the agent the exact `gh` command you want, or say "create a public repo named X and push." Vague "put it on github" burns turns.
+4. Prefer `gh pr create` over the agent inventing a web URL workflow.
+5. If auth fails in Cursor's terminal, run `gh auth status` yourself. PATH issues on Windows are common after install (restart the terminal).
+
+**Agent prompt that works**
+
+```
+Create a public GitHub repo named [name] with gh.
+Use this folder as the source.
+Commit if needed, push main, print the repo URL.
+Do not force-push. Do not change git user config.
+```
+
 ### 21st.dev (UI container)
 
 - Components / themes: [21st.dev](https://21st.dev/)
@@ -347,7 +442,8 @@ When you start a feature, @ that mistakes file. It stops you from retyping the s
 4. `use context7` when touching libraries that change often
 5. Implement in small phases in Cursor, Codex, Claude Code, or OpenCode (free/local)
 6. Commit when the feature works
-7. Security / pattern review pass, then polish
+7. `gh` push / PR when it should leave your machine
+8. Security / pattern review pass, then polish
 
 ---
 
@@ -367,12 +463,15 @@ When you start a feature, @ that mistakes file. It stops you from retyping the s
 | OpenAI Codex | [GitHub](https://github.com/openai/codex) | CLI install & releases |
 | Claude Code | [docs](https://code.claude.com/docs/en) | CLI, agents, hooks |
 | OpenCode | [opencode.ai](https://opencode.ai/) | Free / open-source agent |
+| GitHub CLI | [cli.github.com](https://cli.github.com/) | Repos, PRs, issues, Pages from terminal |
 | Reddit vibe guide | [r/ClaudeAI thread](https://www.reddit.com/r/ClaudeAI/comments/1kivv0w/the_ultimate_vibe_coding_guide/) | Field tips from heavy Cursor use |
 
 ### Extra (worth knowing)
 
 | Resource | Link | Use for |
 |----------|------|---------|
+| gh manual | [cli.github.com/manual](https://cli.github.com/manual/) | Full command reference |
+| GitHub Pages domains | [docs](https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pages-site/managing-a-custom-domain-for-your-github-pages-site) | A / CNAME setup |
 | Ollama | [ollama.com](https://ollama.com/) | Local models for OpenCode ($0 API) |
 | OpenCode + Ollama | [setup guide](https://docs.ollama.com/integrations/opencode) | Official local setup |
 | OpenCode models | [docs](https://opencode.ai/v2/docs/models) | Providers incl. local |
@@ -516,6 +615,22 @@ Review these files / this feature for:
 Return a short list of concrete findings only. No praise.
 ```
 
+### M. Ship with GitHub CLI
+
+```
+Repo goal: [public/private] GitHub repo named [name]
+Folder: current project root
+Steps:
+1) git status; commit only if there are real changes
+2) gh repo create [name] --[public|private] --source=. --remote=origin --push
+   (if origin already exists: git push -u origin HEAD)
+3) Print the https://github.com/... URL
+Constraints:
+- Do not force-push
+- Do not edit git config
+- Do not put tokens in the chat
+```
+
 ### L. IL2CPP Runtime Mod Framework (Advanced)
 Put this in plan mode for cursor
 
@@ -653,6 +768,20 @@ Commit after each phase that works.
 
 @ that file on every non-trivial feature.
 
+### Example 8 - First push with `gh`
+
+You finished a static site locally. You want it on GitHub without the website UI.
+
+```bash
+gh auth status
+git init -b main
+git add -A
+git commit -m "Initial commit: static site"
+gh repo create my-site --public --source=. --remote=origin --description "My site" --push
+```
+
+Then open Pages in the repo settings (or use the `gh api` Pages call from section 4). Add a `CNAME` if you have a domain.
+
 ---
 
 ## 8) Files & sources
@@ -711,6 +840,9 @@ alwaysApply: true
 - [OpenCode models docs](https://opencode.ai/v2/docs/models)
 - [OpenCode + Ollama](https://docs.ollama.com/integrations/opencode)
 - [Ollama](https://ollama.com/)
+- [GitHub CLI](https://cli.github.com/)
+- [GitHub CLI manual](https://cli.github.com/manual/)
+- [GitHub Pages custom domains](https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pages-site/managing-a-custom-domain-for-your-github-pages-site)
 - [The Ultimate Vibe Coding Guide (Reddit)](https://www.reddit.com/r/ClaudeAI/comments/1kivv0w/the_ultimate_vibe_coding_guide/) — u/PhraseProfessional54
 - [v0](https://v0.dev/)
 - [Google AI Studio](https://aistudio.google.com/)
