@@ -1,0 +1,24 @@
+# OS
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Editors / local
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Python local server
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+
+# Cursor (keep project rules if you add them later; ignore local junk)
+.cursor/

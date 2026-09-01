@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Redirect</title>
+  <style>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      font-family: "Segoe UI", system-ui, sans-serif;
+      background: #1a1f1c;
+      color: #9aa39c;
+    }
+  </style>
+</head>
+<body>
+  <p id="status">Opening link…</p>
+  <script src="js/hamr/alphabets.js"></script>
+  <script src="js/hamr/compress.js"></script>
+  <script src="js/url-codec.js"></script>
+  <script>
+    (function () {
+      var status = document.getElementById("status");
+      var hash = location.hash || "";
+      if (hash.charAt(0) === "#") hash = hash.slice(1);
+      try {
+        hash = decodeURIComponent(hash);
+      } catch (e) { /* keep raw */ }
+      hash = hash.replace(/ /g, "");
+
+      if (!hash) {
+        status.textContent = "No payload in this link.";
+        return;
+      }
+
+      var target = UrlCodec.expand(hash);
+      if (!target) {
+        status.textContent = "Could not decode this link.";
+        return;
+      }
+
+      try {
+        var u = new URL(target);
+        if (u.protocol !== "http:" && u.protocol !== "https:") {
+          status.textContent = "Blocked non-http URL.";
+          return;
+        }
+      } catch (e) {
+        status.textContent = "Invalid destination.";
+        return;
+      }
+
+      location.replace(target);
+    })();
+  </script>
+</body>
+</html>

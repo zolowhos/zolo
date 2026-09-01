@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>URL compressor</title>
+  <style>
+    :root {
+      --bg: #1a1f1c;
+      --surface: #252b27;
+      --text: #e8ebe9;
+      --muted: #9aa39c;
+      --accent: #6bbf8a;
+      --accent-dim: #4a9a68;
+      --border: #3a433d;
+      --danger: #d47474;
+      --font: "Segoe UI", system-ui, sans-serif;
+      --mono: "Cascadia Mono", "Consolas", "Courier New", monospace;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: var(--font);
+      color: var(--text);
+      background:
+        radial-gradient(ellipse 80% 50% at 20% 0%, #2a3d32 0%, transparent 55%),
+        radial-gradient(ellipse 60% 40% at 90% 100%, #1e2a24 0%, transparent 50%),
+        var(--bg);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2.5rem 1.25rem 3rem;
+    }
+
+    main { width: 100%; max-width: 40rem; }
+
+    h1 {
+      margin: 0 0 0.35rem;
+      font-size: clamp(1.75rem, 4vw, 2.25rem);
+      font-weight: 650;
+      letter-spacing: -0.02em;
+    }
+
+    .lead {
+      margin: 0 0 1.75rem;
+      color: var(--muted);
+      font-size: 1rem;
+      line-height: 1.45;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 0.4rem;
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    input[type="url"],
+    input[type="text"] {
+      width: 100%;
+      padding: 0.75rem 0.9rem;
+      font: inherit;
+      font-size: 1rem;
+      color: var(--text);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      outline: none;
+    }
+
+    input:focus { border-color: var(--accent-dim); }
+
+    .row {
+      display: flex;
+      gap: 0.6rem;
+      margin-top: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    button {
+      font: inherit;
+      font-size: 0.95rem;
+      font-weight: 600;
+      padding: 0.7rem 1.15rem;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      background: var(--accent);
+      color: #0f1411;
+    }
+
+    button:hover { background: #7dcea0; }
+
+    button.secondary {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    button.secondary:hover { border-color: var(--muted); }
+
+    .msg {
+      margin-top: 1rem;
+      min-height: 1.25rem;
+      font-size: 0.9rem;
+    }
+
+    .msg.error { color: var(--danger); }
+    .msg.ok { color: var(--accent); }
+
+    .result {
+      display: none;
+      margin-top: 1.5rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .result.show { display: block; }
+
+    .short-wrap {
+      display: flex;
+      gap: 0.5rem;
+      align-items: stretch;
+    }
+
+    .short-wrap input { flex: 1; }
+
+    .stats {
+      margin: 0.85rem 0 0;
+      padding: 0;
+      list-style: none;
+      font-size: 0.85rem;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .stats strong {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .payload {
+      margin-top: 0.75rem;
+      padding: 0.65rem 0.75rem;
+      font-family: var(--mono);
+      font-size: 0.85rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      word-break: break-all;
+    }
+
+    .note {
+      margin: 2rem 0 0;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+      font-size: 0.8rem;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .note a { color: var(--accent); }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>URL compressor</h1>
+    <p class="lead">
+      Picks the shortest payload: site templates when they win (e.g. YouTube →
+      <code>%y</code> + video id), otherwise ha.mr bit-packing with a dense ASCII alphabet.
+      No server database.
+    </p>
+
+    <form id="form" novalidate>
+      <label for="url">Original URL</label>
+      <input
+        type="url"
+        id="url"
+        name="url"
+        value="https://www.youtube.com/watch?v=7oaQJu9EEQg"
+        placeholder="https://www.youtube.com/watch?v=…"
+        autocomplete="off"
+        required
+      >
+      <div class="row">
+        <button type="submit">Compress</button>
+      </div>
+    </form>
+
+    <p class="msg" id="msg" role="status"></p>
+
+    <div class="result" id="result">
+      <label for="short">Short link</label>
+      <div class="short-wrap">
+        <input type="text" id="short" readonly>
+        <button type="button" class="secondary" id="copy">Copy</button>
+      </div>
+      <div class="payload" id="payload-view" hidden></div>
+      <ul class="stats" id="stats"></ul>
+    </div>
+
+    <p class="note">
+      Encoding inspired by
+      <a href="https://github.com/p2r3/ha.mr" rel="noopener noreferrer">ha.mr</a>
+      (MIT). Tries site templates and denser alphabets, keeps the shortest UTF-8
+      payload. Works from a local file (<code>file://</code>); <code>c.html</code>
+      expands the hash and redirects.
+    </p>
+  </main>
+
+  <script src="js/hamr/alphabets.js"></script>
+  <script src="js/hamr/compress.js"></script>
+  <script src="js/url-codec.js"></script>
+  <script>
+    (function () {
+      var form = document.getElementById("form");
+      var urlInput = document.getElementById("url");
+      var msg = document.getElementById("msg");
+      var result = document.getElementById("result");
+      var shortInput = document.getElementById("short");
+      var payloadView = document.getElementById("payload-view");
+      var statsEl = document.getElementById("stats");
+      var copyBtn = document.getElementById("copy");
+
+      function setMsg(text, type) {
+        msg.textContent = text || "";
+        msg.className = "msg" + (type ? " " + type : "");
+      }
+
+      /* Works for http(s) and file:// (origin is often "null" on file) */
+      function redirectBase() {
+        var href = location.href.split("#")[0].split("?")[0];
+        return href.replace(/[^/\\]+$/, "c.html");
+      }
+
+      function shareLink(payload) {
+        return redirectBase() + "#" + payload;
+      }
+
+      function showResult(longUrl, packed) {
+        var link = shareLink(packed.payload);
+        shortInput.value = link;
+        payloadView.hidden = false;
+        payloadView.textContent =
+          "payload " + packed.payload + "  (" + packed.via + ")";
+        result.classList.add("show");
+
+        var withoutProto = longUrl.replace(/^https?:\/\//i, "");
+        var payloadLen = packed.payload.length;
+        var payloadBytes = packed.bytes;
+        var ratio = (1 - payloadBytes / withoutProto.length) * 100;
+        var ratioText;
+        if (ratio < 0) {
+          ratioText =
+            "Payload is " + Math.floor(-ratio) + "% larger (UTF-8 bytes vs URL without protocol)";
+        } else if (ratio > 0) {
+          ratioText =
+            "Payload is " + Math.ceil(ratio) + "% smaller (UTF-8 bytes vs URL without protocol)";
+        } else {
+          ratioText = "Payload matches the URL length without protocol";
+        }
+
+        statsEl.innerHTML =
+          "<li>Original URL: <strong>" + longUrl.length + "</strong> chars</li>" +
+          "<li>Without protocol: <strong>" + withoutProto.length + "</strong> chars</li>" +
+          "<li>Payload: <strong>" + payloadLen + "</strong> chars / <strong>" +
+          payloadBytes + "</strong> UTF-8 bytes</li>" +
+          "<li>Method: <strong>" + packed.via + "</strong></li>" +
+          "<li>" + ratioText + "</li>" +
+          "<li>Full short link: <strong>" + link.length + "</strong> chars</li>";
+      }
+
+      form.addEventListener("submit", function (e) {
+        e.preventDefault();
+        var longUrl = UrlCodec.normalize(urlInput.value);
+        if (!longUrl) {
+          setMsg("Enter a valid http or https URL (no credentials).", "error");
+          result.classList.remove("show");
+          return;
+        }
+
+        try {
+          var packed = UrlCodec.compress(longUrl);
+          var roundTrip = UrlCodec.expand(packed.payload);
+          if (!roundTrip) {
+            setMsg("Compressed but could not round-trip decode.", "error");
+            return;
+          }
+          showResult(longUrl, packed);
+          setMsg("Chose shortest encoding: " + packed.via + ".", "ok");
+        } catch (err) {
+          console.error(err);
+          setMsg("Compression failed for that URL.", "error");
+          result.classList.remove("show");
+        }
+      });
+
+      copyBtn.addEventListener("click", function () {
+        var text = shortInput.value;
+        if (!text) return;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(function () {
+            setMsg("Copied.", "ok");
+          }).catch(function () {
+            shortInput.select();
+            setMsg("Select the link and copy it manually.", "error");
+          });
+        } else {
+          shortInput.select();
+          try {
+            document.execCommand("copy");
+            setMsg("Copied.", "ok");
+          } catch (err) {
+            setMsg("Select the link and copy it manually.", "error");
+          }
+        }
+      });
+
+      form.dispatchEvent(new Event("submit"));
+    })();
+  </script>
+</body>
+</html>
