@@ -89,6 +89,7 @@ Done when: npm run build passes and the toggle updates prices without a full rel
 - If the model invents an API, stop and fetch docs (Context7) before the next turn.
 - If the first reply goes off the rails, revert and rewrite the prompt. Do not keep stacking fixes on bad output. The model will defend its mistakes.
 - End implementation prompts with a scope lock, e.g. `Do only what I asked. Do not change anything else.`
+- Ban fallback stacks in every kind of project (apps, APIs, games, CLIs, systems, hardware, scripts). If the right method needs a dependency, tool, permission, or config, use that method — do not ship a weaker backup path "just in case."
 
 ### Bad vs good
 
@@ -631,6 +632,40 @@ Constraints:
 - Do not put tokens in the chat
 ```
 
+### N. No fallbacks — best method only (append or save as a rule)
+
+Works for **any** project type: websites, APIs, games, CLIs, desktop/mobile apps, systems code, hardware tooling, scripts, reverse engineering, etc. Use on feature work, or drop it into `.cursor/rules/no-fallbacks.mdc` with `alwaysApply: true`.
+
+```
+No fallback-based systems for any feature, in any domain (UI, API, game, CLI, systems, hardware, tooling, scripts).
+
+- Pick the single best method / API / library / algorithm / protocol for the job and implement that path only.
+- Do not add "if X fails, try Y, then Z" chains, stubbed substitutes, or degraded backup flows unless I explicitly ask for resilience, redundancy, offline mode, or graceful degradation.
+- Do not invent a weaker substitute when the correct approach needs a package, tool, driver, SDK, env var, permission, or hardware capability — ask or add what is required instead.
+- Prefer one clear happy path + honest errors / hard failures over silent downgrades or "works somehow" paths.
+- If two approaches are close, choose the one this repo already uses (@[example-file]) or the one current docs recommend (use context7). Explain the choice in one line.
+```
+
+Example Cursor rule file:
+
+```md
+---
+description: Ban fallback stacks — use the best method only (any project type)
+alwaysApply: true
+---
+
+# No fallbacks (all project types)
+
+Applies to websites, APIs, games, CLIs, desktop/mobile, systems, hardware, tooling, and scripts.
+
+- Implement the best option for each feature. One primary path.
+- Do not add fallback / backup / "just in case" alternate implementations.
+- Do not silently degrade. Bad examples (any stack): mock data when the real source is missing; a second renderer/physics/path when the first should be fixed; polling when events/hooks exist; busy-wait when a proper wait/signal exists; software stubs when the real SDK/driver/API is required; "compat shims" that hide a broken primary path.
+- If the best method needs a dependency, tool, env, permission, or hardware feature — request it or add it. Do not ship a weaker substitute.
+- Fail loudly with a clear error when the primary path cannot run. Do not hide gaps behind fallbacks.
+- Resilience, redundancy, offline mode, or graceful degradation only when the user asks for them by name.
+```
+
 ### L. IL2CPP Runtime Mod Framework (Advanced)
 Put this in plan mode for cursor
 
@@ -764,6 +799,7 @@ Commit after each phase that works.
 - Do not create a new Button; use components/ui/button.tsx
 - Do not switch to pages/ router
 - Do not add console.log left in production paths unless I ask for debug logs
+- Do not build fallback chains (try A, else B, else C) in any project type. Use the best method only
 ```
 
 @ that file on every non-trivial feature.
@@ -817,6 +853,7 @@ alwaysApply: true
 - Ask before adding dependencies
 - Prefer editing existing files over creating new ones
 - When implementing, do only what was asked
+- No fallback stacks (any project type): use the best method only; fail loudly instead of degrading
 ```
 
 ### Sources used for this bible
