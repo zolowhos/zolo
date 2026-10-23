@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="420" height="260" viewBox="0 0 420 260">
+  <g fill="#6a5878">
+    <path transform="translate(36 48) rotate(-24)" d="M1 9h16V7h12v4h-8v2h-4v9h-5v-9H8v5H3V9z"/>
+    <path transform="translate(168 34) rotate(18)" d="M1 9h16V7h12v4h-8v2h-4v9h-5v-9H8v5H3V9z"/>
+    <path transform="translate(292 58) rotate(-12)" d="M1 9h16V7h12v4h-8v2h-4v9h-5v-9H8v5H3V9z"/>
+    <path transform="translate(98 150) rotate(32)" d="M1 9h16V7h12v4h-8v2h-4v9h-5v-9H8v5H3V9z"/>
+    <path transform="translate(236 156) rotate(-38)" d="M1 9h16V7h12v4h-8v2h-4v9h-5v-9H8v5H3V9z"/>
+    <path transform="translate(348 148) rotate(8)" d="M1 9h16V7h12v4h-8v2h-4v9h-5v-9H8v5H3V9z"/>
+    <path transform="translate(20 188) rotate(-8)" d="M1 9h16V7h12v4h-8v2h-4v9h-5v-9H8v5H3V9z"/>
+  </g>
+</svg>
