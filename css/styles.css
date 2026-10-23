@@ -382,7 +382,7 @@ html.no-gl main {
   transform: translate(-50%, -50%);
   border-radius: 50%;
   object-fit: cover;
-  background: #5865f2;
+  background: transparent;
 }
 
 .discord-outline {
