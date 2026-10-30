@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="color-scheme" content="light dark">
+</head>
+<body>
+<pre id="out"></pre>
+<script>
+const PASTE = "https://pastebin.com/raw/ebPyxZiT";
+
+fetch("https://proxy.cors.dev/" + PASTE)
+  .then(r => r.text())
+  .then(t => document.getElementById("out").textContent = t)
+  .catch(e => document.getElementById("out").textContent = "Error: " + e);
+</script>
+</body>
+</html>
